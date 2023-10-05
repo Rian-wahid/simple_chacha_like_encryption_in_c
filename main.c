@@ -3,11 +3,11 @@
 
 typedef unsigned char byte;
 typedef unsigned int  uint;
-struct bufferStruct{
+typedef struct {
   byte *b;
-  int   l;
-};
-typedef struct bufferStruct buffer;
+  int l;
+} buffer;
+
 void bytesToRawKeys(buffer buf, uint *ka,uint *kb,uint *kc,uint *kd){
   if(buf.l<16){
     exit(1);
@@ -116,20 +116,16 @@ int main(){
   printf("input key       :");
   buffer key=flexLenScan();
   if(key.l<16){
-    byte *temp=key.b;
+    byte temp[key.l];
+    for(int i=0; i<key.l; i++){
+      temp[i]=key.b[i];
+    }
+    free(key.b);
     key.b=malloc(16);
     for(int i=0; i<key.l; i++){
       key.b[i]=temp[i];
     }
     key.l=16;
-    free(temp);
-    /*byte *_key=malloc(16);
-    for(int i=0;i<key.l;i++){
-      _key[i]=key.b[i];
-    }
-    key.l=16;
-    *key.b=*_key;*/
-    //free(_key); //sigsegv
   }
   buffer hashedKey=to16BytesHash(key);
   printf("hashed key (hex):");
