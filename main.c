@@ -116,12 +116,19 @@ int main(){
   printf("input key       :");
   buffer key=flexLenScan();
   if(key.l<16){
-    byte *_key=malloc(16);
+    byte *temp=key.b;
+    key.b=malloc(16);
+    for(int i=0; i<key.l; i++){
+      key.b[i]=temp[i];
+    }
+    key.l=16;
+    free(temp);
+    /*byte *_key=malloc(16);
     for(int i=0;i<key.l;i++){
       _key[i]=key.b[i];
     }
     key.l=16;
-    *key.b=*_key;
+    *key.b=*_key;*/
     //free(_key); //sigsegv
   }
   buffer hashedKey=to16BytesHash(key);
