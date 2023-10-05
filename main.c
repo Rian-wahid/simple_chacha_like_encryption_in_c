@@ -107,8 +107,6 @@ buffer to16BytesHash(buffer buf){
     result.b[j]=b0;
     if(result.b[j]+1>result.b[j]){
       result.b[j]++;
-    }else{
-      result.b[j]--;
     }
   }
   return result;
@@ -123,10 +121,8 @@ int main(){
       _key[i]=key.b[i];
     }
     key.l=16;
-    ////free(key.b) //sigsegv
-    //byte *old=key.b;
-    key.b=_key;
-    //free(old); //sigsegv (segmentation fault)
+    *key.b=*_key;
+    //free(_key); //sigsegv
   }
   buffer hashedKey=to16BytesHash(key);
   printf("hashed key (hex):");
