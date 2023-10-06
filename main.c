@@ -45,7 +45,7 @@ buffer xorKeyStream(rawKey rawKeys, buffer buf){
     key[4]=(byte)*b,key[5]=(byte)(*b>>8),key[6]=(byte)(*b>>16),key[7]=(byte)(*b>>24);
     key[8]=(byte)*c,key[9]=(byte)(*c>>8),key[10]=(byte)(*c>>16),key[11]=(byte)(*c>>24);
     key[12]=(byte)*d,key[13]=(byte)(*d>>8),key[14]=(byte)(*d>>16),key[15]=(byte)(*d>>24);
-    for(int i=skip%16; i<16 && counter<buf.l; i++){
+    for(int i=skip; i<16 && counter<buf.l; i++){
       result.b[counter]=buf.b[counter]^key[i];
       counter++;
     }
@@ -106,9 +106,6 @@ buffer flexLenScan(){
 
 buffer to16BytesHash(buffer buf){
   buffer result={.l=16,.b=malloc(result.l)};
-  for(int i=0; i<result.l; i++){
-    result.b[i]=0xff;
-  }
   byte b0=buf.b[0];
   for(int i=0; i<buf.l; i++){
     if(i+1<buf.l){
@@ -166,7 +163,7 @@ int main(){
   printf("decrypted       :%s\n",decrypted.b);
 
   ////stream test
-  //buffer buff={.l=7,.b=malloc(buff.l)};
+  //buffer buff={.l=9,.b=malloc(buff.l)};
   //bytesToRawKeys(hashedKey,encKey);
   //buffer enc1=xorKeyStream(encKey,buff);
   //buffer enc2=xorKeyStream(encKey,buff);
