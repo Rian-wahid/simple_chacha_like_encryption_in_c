@@ -7,15 +7,25 @@ typedef struct {
   byte *b;
   int l;
 } buffer;
-
-void bytesToRawKeys(buffer buf, uint *ka,uint *kb,uint *kc,uint *kd){
+typedef struct {
+  uint *k[4];
+  uint *skip;
+} rawKey;
+rawKey newRawKey(){
+  rawKey result={.k={malloc(4),malloc(4),malloc(4),malloc(4)}};
+  result.skip=malloc(4);
+  *result.skip=0;
+  return result;
+}
+void bytesToRawKeys(buffer buf, rawKey rawKeys){
   if(buf.l<16){
     exit(1);
   }
-  *ka=((uint)buf.b[0])|(((uint)buf.b[4])<<8)|(((uint)buf.b[8])<<16)|(((uint)buf.b[12])<<24);
-  *kb=((uint)buf.b[1])|(((uint)buf.b[5])<<8)|(((uint)buf.b[9])<<16)|(((uint)buf.b[13])<<24);
-  *kc=((uint)buf.b[2])|(((uint)buf.b[6])<<8)|(((uint)buf.b[10])<<16)|(((uint)buf.b[14])<<24);
-  *kd=((uint)buf.b[3])|(((uint)buf.b[7])<<8)|(((uint)buf.b[11])<<16)|(((uint)buf.b[15])<<24);
+  *rawKeys.skip=0;
+  *rawKeys.k[0]=((uint)buf.b[0])|(((uint)buf.b[1])<<8)|(((uint)buf.b[2])<<16)|(((uint)buf.b[3])<<24);
+  *rawKeys.k[1]=((uint)buf.b[4])|(((uint)buf.b[5])<<8)|(((uint)buf.b[6])<<16)|(((uint)buf.b[7])<<24);
+  *rawKeys.k[2]=((uint)buf.b[8])|(((uint)buf.b[9])<<8)|(((uint)buf.b[10])<<16)|(((uint)buf.b[11])<<24);
+  *rawKeys.k[3]=((uint)buf.b[12])|(((uint)buf.b[13])<<8)|(((uint)buf.b[14])<<16)|(((uint)buf.b[15])<<24);
 }
 void printfHex(buffer buf){
   for(int i=0; i<buf.l; i++){
@@ -24,24 +34,31 @@ void printfHex(buffer buf){
   printf("\n");
 }
 
-buffer xorKeyStream(uint *rawKeys[4], buffer buf){
-  int counter=0;
+buffer xorKeyStream(rawKey rawKeys, buffer buf){
+  uint counter=0;
+  uint skip=*rawKeys.skip;
   buffer result={.l=buf.l,.b=malloc(buf.l)};
-  uint *a=rawKeys[0],*b=rawKeys[1],*c=rawKeys[2],*d=rawKeys[3];
+  uint *a=rawKeys.k[0],*b=rawKeys.k[1],*c=rawKeys.k[2],*d=rawKeys.k[3];
   for(;counter<buf.l;){
-    *a+=*b,*d^=*a,*d=(*d<<16)|(*d>>16),*c+=*d,*b^=*c,*b=(*b<<12)|(*b>>20);
-    *a+=*b,*d^=*a,*d=(*d<<8)|(*d>>24),*c+=*d,*b^=*c,*b=(*b<<7)|(*b>>25);
     byte *key=malloc(16);
     key[0]=(byte)*a,key[1]=(byte)(*a>>8),key[2]=(byte)(*a>>16),key[3]=(byte)(*a>>24);
     key[4]=(byte)*b,key[5]=(byte)(*b>>8),key[6]=(byte)(*b>>16),key[7]=(byte)(*b>>24);
     key[8]=(byte)*c,key[9]=(byte)(*c>>8),key[10]=(byte)(*c>>16),key[11]=(byte)(*c>>24);
     key[12]=(byte)*d,key[13]=(byte)(*d>>8),key[14]=(byte)(*d>>16),key[15]=(byte)(*d>>24);
-    for(int i=0; i<16 && counter<buf.l; i++){
+    for(int i=skip%16; i<16 && counter<buf.l; i++){
       result.b[counter]=buf.b[counter]^key[i];
       counter++;
     }
     free(key);
+    skip+=counter;
+    skip%=16;
+    if(skip==0){
+      *a+=*b,*d^=*a,*d=(*d<<16)|(*d>>16),*c+=*d,*b^=*c,*b=(*b<<12)|(*b>>20);
+      *a+=*b,*d^=*a,*d=(*d<<8)|(*d>>24),*c+=*d,*b^=*c,*b=(*b<<7)|(*b>>25);     
+    }
+
   }
+  *rawKeys.skip=skip;
   return result;
 }
 
@@ -130,9 +147,9 @@ int main(){
   buffer hashedKey=to16BytesHash(key);
   printf("hashed key (hex):");
   printfHex(hashedKey);
-  uint a,b,c,d;
-  uint *encKey[4]={&a,&b,&c,&d};
-  bytesToRawKeys(hashedKey,&a,&b,&c,&d);
+  rawKey encKey=newRawKey();
+  bytesToRawKeys(hashedKey,encKey);
+
   printf("input plaintext :");
   buffer buf=flexLenScan();
   printf("plaintext (hex) :");
@@ -141,16 +158,35 @@ int main(){
   buffer encrypted=xorKeyStream(encKey,buf);
   printfHex(encrypted);
   //printfHex(xorKeyStream(encKey,buf));
-  bytesToRawKeys(hashedKey, &a,&b,&c,&d);
+  bytesToRawKeys(hashedKey,encKey);
   printf("decrypted (hex) :");
   buffer decrypted=xorKeyStream(encKey,encrypted);
   printfHex(decrypted);
   printf("decrypted       :%s\n",decrypted.b);
+
+  ////stream test
+  //buffer buff={.l=7,.b=malloc(buff.l)};
+  //bytesToRawKeys(hashedKey,encKey);
+  //buffer enc1=xorKeyStream(encKey,buff);
+  //buffer enc2=xorKeyStream(encKey,buff);
+  //buffer enc3=xorKeyStream(encKey,buff);
+  //printfHex(enc1);
+  //printfHex(enc2);
+  //printfHex(enc3);
+  //bytesToRawKeys(hashedKey,encKey);
+  //printfHex(xorKeyStream(encKey,enc1));
+  //printfHex(xorKeyStream(encKey,enc2));
+  //printfHex(xorKeyStream(encKey,enc3));
+  
   free(key.b);
   free(buf.b);
   free(encrypted.b);
   free(decrypted.b);
   free(hashedKey.b);
+  free(encKey.skip);
+  for(int i=0; i<4; i++){
+    free(encKey.k[i]);
+  }
   return 0;
 }
 
