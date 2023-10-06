@@ -29,7 +29,7 @@ void bytesToRawKeys(buffer buf, rawKey rawKeys){
 }
 void printfHex(buffer buf){
   for(int i=0; i<buf.l; i++){
-    printf("%02X",buf.b[i]);
+    printf("%02x",buf.b[i]);
   }
   printf("\n");
 }
