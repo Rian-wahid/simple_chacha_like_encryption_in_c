@@ -122,8 +122,9 @@ buffer to16BytesHash(buffer buf){
     int j=i%result.l;
     b0^=buf.b[i]-((b0<<4)|(b0>>4));
     result.b[j]=b0;
-    if(result.b[j]+1>result.b[j]){
-      result.b[j]++;
+    byte rr=result.b[j]+1;
+    if(rr>result.b[j]){
+      result.b[j]=rr;
     }
   }
   return result;
