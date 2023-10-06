@@ -48,10 +48,13 @@ buffer xorKeyStream(rawKey rawKeys, buffer buf){
     for(int i=skip; i<16 && counter<buf.l; i++){
       result.b[counter]=buf.b[counter]^key[i];
       counter++;
+      skip++;
+      if(skip==16){
+        skip=0;
+        break;
+      }
     }
     free(key);
-    skip+=counter;
-    skip%=16;
     if(skip==0){
       *a+=*b,*d^=*a,*d=(*d<<16)|(*d>>16),*c+=*d,*b^=*c,*b=(*b<<12)|(*b>>20);
       *a+=*b,*d^=*a,*d=(*d<<8)|(*d>>24),*c+=*d,*b^=*c,*b=(*b<<7)|(*b>>25);     
@@ -162,8 +165,8 @@ int main(){
   printfHex(decrypted);
   printf("decrypted       :%s\n",decrypted.b);
 
-  ////stream test
-  //buffer buff={.l=9,.b=malloc(buff.l)};
+  //stream test
+  //buffer buff={.l=10,.b=malloc(buff.l)};
   //bytesToRawKeys(hashedKey,encKey);
   //buffer enc1=xorKeyStream(encKey,buff);
   //buffer enc2=xorKeyStream(encKey,buff);
