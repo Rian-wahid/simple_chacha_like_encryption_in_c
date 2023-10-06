@@ -5,7 +5,7 @@ typedef unsigned char byte;
 typedef unsigned int  uint;
 typedef struct {
   byte *b;
-  int l;
+  uint l;
 } buffer;
 typedef struct {
   uint *k[4];
@@ -50,7 +50,11 @@ buffer xorKeyStream(rawKey rawKeys, buffer buf){
     key[8]=(byte)*c,key[9]=(byte)(*c>>8),key[10]=(byte)(*c>>16),key[11]=(byte)(*c>>24);
     key[12]=(byte)*d,key[13]=(byte)(*d>>8),key[14]=(byte)(*d>>16),key[15]=(byte)(*d>>24);
     for(int i=skip; i<16 && counter<buf.l; i++){
-      result.b[counter]=buf.b[counter]^key[i];
+      byte k=key[i]+1;
+      if(k<key[i]){
+        k=key[i];
+      }
+      result.b[counter]=buf.b[counter]^k;
       counter++;
       skip++;
       if(skip==16){
@@ -60,6 +64,7 @@ buffer xorKeyStream(rawKey rawKeys, buffer buf){
     }
     free(key);
   }
+  
   *rawKeys.skip=skip;
   return result;
 }
@@ -115,6 +120,9 @@ buffer to16BytesHash(buffer buf){
     }else{
       buf.b[i]-=b0;
     }
+    if(buf.b[i]==0){
+      buf.b[i]=b0^((byte)i)+1;
+    }
   }
   b0=0xff;
   for(int i=0; i<buf.l; i++){
@@ -165,18 +173,48 @@ int main(){
   printf("decrypted       :%s\n",decrypted.b);
 
   //stream test
-  //buffer buff={.l=10,.b=malloc(buff.l)};
-  //bytesToRawKeys(hashedKey,encKey);
-  //buffer enc1=xorKeyStream(encKey,buff);
-  //buffer enc2=xorKeyStream(encKey,buff);
-  //buffer enc3=xorKeyStream(encKey,buff);
-  //printfHex(enc1);
-  //printfHex(enc2);
-  //printfHex(enc3);
-  //bytesToRawKeys(hashedKey,encKey);
-  //printfHex(xorKeyStream(encKey,enc1));
-  //printfHex(xorKeyStream(encKey,enc2));
-  //printfHex(xorKeyStream(encKey,enc3));
+  /*buffer buff={.l=10,.b=malloc(buff.l)};
+  buffer buff2={.l=buff.l/2,.b=malloc(buff2.l)};
+  bytesToRawKeys(hashedKey,encKey);
+  for(int i=0; i<buff2.l; i++){
+    buff2.b[i]=0;
+  }
+  buffer enc1_1=xorKeyStream(encKey,buff2);
+  buffer enc1_2=xorKeyStream(encKey,buff2);
+  buffer enc1={.l=buff.l,.b=malloc(enc1.l)};
+  int ind=0;
+  for(int i=0; i<enc1_1.l; i++){
+    enc1.b[ind]=enc1_1.b[i];
+    ind++;
+  }
+  for(int i=0; i<enc1_2.l; i++){
+    enc1.b[ind]=enc1_2.b[i];
+    ind++;
+  }
+  buffer enc2=xorKeyStream(encKey,buff);
+  buffer enc3=xorKeyStream(encKey,buff);
+  printfHex(enc1_1);
+  printfHex(enc1_2);
+  printfHex(enc2);
+  printfHex(enc3);
+
+  bytesToRawKeys(hashedKey,encKey);
+  printfHex(xorKeyStream(encKey,enc1));
+  printfHex(xorKeyStream(encKey,enc2));
+  int ll=enc3.l%2;
+  buffer enc3_1={.l=enc3.l/2,.b=malloc(enc3_1.l)};
+  buffer enc3_2={.l=(enc3.l/2)+ll,.b=malloc(enc3_2.l)};
+  ind=0;
+  for(int i=0; i<enc3_1.l; i++){
+    enc3_1.b[i]=enc3.b[ind];
+    ind++;
+  }
+  for(int i=0;i<enc3_2.l; i++){
+    enc3_2.b[i]=enc3.b[ind];
+    ind++;
+  }
+  printfHex(xorKeyStream(encKey,enc3_1));
+  printfHex(xorKeyStream(encKey,enc3_2));*/
   
   free(key.b);
   free(buf.b);
