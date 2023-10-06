@@ -41,6 +41,10 @@ buffer xorKeyStream(rawKey rawKeys, buffer buf){
   uint *a=rawKeys.k[0],*b=rawKeys.k[1],*c=rawKeys.k[2],*d=rawKeys.k[3];
   for(;counter<buf.l;){
     byte *key=malloc(16);
+    if(skip==0){
+      *a+=*b,*d^=*a,*d=(*d<<16)|(*d>>16),*c+=*d,*b^=*c,*b=(*b<<12)|(*b>>20);
+      *a+=*b,*d^=*a,*d=(*d<<8)|(*d>>24),*c+=*d,*b^=*c,*b=(*b<<7)|(*b>>25);     
+    }
     key[0]=(byte)*a,key[1]=(byte)(*a>>8),key[2]=(byte)(*a>>16),key[3]=(byte)(*a>>24);
     key[4]=(byte)*b,key[5]=(byte)(*b>>8),key[6]=(byte)(*b>>16),key[7]=(byte)(*b>>24);
     key[8]=(byte)*c,key[9]=(byte)(*c>>8),key[10]=(byte)(*c>>16),key[11]=(byte)(*c>>24);
@@ -55,11 +59,6 @@ buffer xorKeyStream(rawKey rawKeys, buffer buf){
       }
     }
     free(key);
-    if(skip==0){
-      *a+=*b,*d^=*a,*d=(*d<<16)|(*d>>16),*c+=*d,*b^=*c,*b=(*b<<12)|(*b>>20);
-      *a+=*b,*d^=*a,*d=(*d<<8)|(*d>>24),*c+=*d,*b^=*c,*b=(*b<<7)|(*b>>25);     
-    }
-
   }
   *rawKeys.skip=skip;
   return result;
