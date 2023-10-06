@@ -70,7 +70,7 @@ buffer flexLenScan(){
     if(c=='\n'){
       break;
     }
-    if(c==8){
+    /*if(c==8){
       if(result.l==1){
         result.l=0;
         free(result.b);
@@ -85,7 +85,7 @@ buffer flexLenScan(){
         free(temp);
       }
       continue;
-    }
+    }*/
     if(result.l==0){
       result.b=malloc(1);
       result.b[0]=(byte)c;
